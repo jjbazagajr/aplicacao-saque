@@ -1,0 +1,39 @@
+version: '3'
+services:
+  mysql-standalone:
+    image: 'mysql:5.7'
+    environment:
+      - MYSQL_ROOT_PASSWORD=root
+      - MYSQL_PASSWORD=root
+      - MYSQL_DATABASE=aplicacao-saque
+      - TZ=America/Recife
+    ports:
+      - "3306:3306"
+    logging:
+      driver: none
+  nosql-database:
+    image: mongo:3.2.4
+    environment:
+      - TZ=America/Recife
+    container_name: "nosql-database"
+    ports:
+      - 27017:27017
+    command: --smallfiles
+    logging:
+      driver: none
+  aplicacao-saque-api:
+    build:
+      context: ./
+      dockerfile: ./Dockerfile
+    image: aplicacao-saque/api
+    ports:
+      - "8080:8080"
+      - "5005:5005"
+    environment:
+      - ADDITIONAL_OPTS=-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005 -Xmx1G -Xms128m -XX:MaxMetaspaceSize=128m
+      - PROFILE=dev
+      - TZ=America/Recife
+    links:
+      - nosql-database
+    depends_on:
+      - mysql-standalone
